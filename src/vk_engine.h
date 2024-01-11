@@ -7,6 +7,12 @@
 #include <vk_descriptors.h>
 #include "vk_mem_alloc.h"
 #include <vk_pipelines.h>
+
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_vulkan.h"
+
+
 struct FrameData {
 	VkCommandPool commandPool;
 	VkCommandBuffer mainCommandBuffer;
@@ -67,6 +73,13 @@ public:
 	VkPipeline _gradientPipeline;
 	VkPipelineLayout _gradientPipelineLayout;
 
+	// immediate submit structures
+	VkFence _immediateFence;
+	VkCommandPool _immediateCommandPool;
+	VkCommandBuffer _immediateCommandBuffer;
+
+
+
 	//initializes everything in the engine
 	void init();
 
@@ -79,6 +92,8 @@ public:
 	//run main loop
 	void run();
 
+	void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
+
 	//Added functions below
 
 private:
@@ -90,8 +105,11 @@ private:
 	void init_descriptors();
 	void init_pipelines();
 	void init_background_pipelines();
+	void init_imgui();
 
 	void draw_background(VkCommandBuffer cmd);
+	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
 	void create_swapchain(uint32_t width, uint32_t height);
 	void destroy_swapchain();
+
 };
