@@ -4,12 +4,14 @@
 #pragma once
 
 #include <vk_types.h>
+#include "deletion_queue.h"
 
 struct FrameData {
 	VkCommandPool commandPool;
 	VkCommandBuffer mainCommandBuffer;
 	VkSemaphore swapSemaphore, renderSemaphore;
 	VkFence renderFence;
+	DeletionQueue deletionQueue;
 
 };
 
@@ -48,6 +50,15 @@ public:
 	VkQueue _graphicsQueue;
 	uint32_t _graphicsQueueFamily;
 
+	DeletionQueue _mainDeletionQueue;
+
+	VmaAllocator _allocator;
+
+	//draw resources
+	AllocatedImage _drawImage;
+	VkExtent2D _drawExtent;
+}
+
 	//initializes everything in the engine
 	void init();
 
@@ -68,7 +79,11 @@ private:
 	void init_swapchain();
 	void init_commands();
 	void init_sync_structures();
-
 	void create_swapchain(uint32_t width, uint32_t height);
+	
+	void draw_background(VkCommandBuffer cmd);	
+
+	
 	void destroy_swapchain();
+	
 };
