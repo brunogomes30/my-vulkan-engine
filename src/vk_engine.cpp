@@ -31,7 +31,7 @@ void VulkanEngine::init()
     // We initialize SDL and create a window with it.
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
     _window = SDL_CreateWindow(
         "Vulkan Engine",
@@ -251,6 +251,7 @@ void VulkanEngine::init_mesh_pipeline() {
     VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::pipeline_layout_create_info();
     pipeline_layout_info.pPushConstantRanges = &bufferRange;
     pipeline_layout_info.pushConstantRangeCount = 1;
+
 
     VK_CHECK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_meshPipelineLayout));
 
@@ -641,6 +642,24 @@ void VulkanEngine::draw_background(VkCommandBuffer cmd)
 
     ComputeEffect& effect = backgroundEffects[currentBackgroundEffect];
 
+
+    VkViewport viewport = {};
+    viewport.x = 0;
+    viewport.y = 0;
+    viewport.width = _drawExtent.width;
+    viewport.height = _drawExtent.height;
+    viewport.minDepth = 0.f;
+    viewport.maxDepth = 1.f;
+
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+    VkRect2D scissor = {};
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    scissor.extent.height = _drawExtent.height;
+    scissor.extent.width = _drawExtent.width;
+
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
     // bind the gradient drawing compute pipeline
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, effect.pipeline);
 
@@ -708,7 +727,13 @@ void VulkanEngine::draw()
     VK_CHECK(vkResetFences(_device, 1, &get_current_frame().renderFence));
 
     uint32_t swapchainImageIndex;
-    VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1000000000, get_current_frame().swapSemaphore, nullptr, &swapchainImageIndex));
+
+    VkResult e = vkAcquireNextImageKHR(_device, _swapchain, 1000000000, get_current_frame().swapSemaphore, nullptr, &swapchainImageIndex);
+    if (e == VK_ERROR_OUT_OF_DATE_KHR) {
+        resize_requested = true;
+        return;
+    }
+    //VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1000000000, get_current_frame().swapSemaphore, nullptr, &swapchainImageIndex));
 
     
     VkCommandBuffer cmd = get_current_frame().mainCommandBuffer;
@@ -787,10 +812,15 @@ void VulkanEngine::draw()
 
     presentInfo.pImageIndices = &swapchainImageIndex;
 
-    VK_CHECK(vkQueuePresentKHR(_graphicsQueue, &presentInfo));
 
     // increase the number of frames drawn
     _frameNumber++;
+
+    VkResult presentResult = vkQueuePresentKHR(_graphicsQueue, &presentInfo);
+    if (presentResult == VK_ERROR_OUT_OF_DATE_KHR) {
+        resize_requested = true;
+    }
+
 }
 
 void VulkanEngine::run()
@@ -825,6 +855,10 @@ void VulkanEngine::run()
             continue;
         }
 
+        if (resize_requested) {
+            resize_swapchain();
+        }
+
         // imgui new frame
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplSDL2_NewFrame(_window);
@@ -832,6 +866,7 @@ void VulkanEngine::run()
 
         //some imgui UI to test
         if (ImGui::Begin("background")) {
+            ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
             ComputeEffect& selected = backgroundEffects[currentBackgroundEffect];
 
             ImGui::Text("Selected Effect ", selected.name);
@@ -849,5 +884,20 @@ void VulkanEngine::run()
 
         draw();
     }
+}
+
+void VulkanEngine::resize_swapchain() {
+    vkDeviceWaitIdle(_device);
+
+    destroy_swapchain();
+
+    int w, h;
+    SDL_GetWindowSize(_window, &w, &h);
+    _drawExtent.height = std::min(_swapchainExtent.height, _drawImage.imageExtent.height) * renderScale;
+    _drawExtent.width = std::min(_swapchainExtent.width, _drawImage.imageExtent.width) * renderScale;
+
+    create_swapchain(_windowExtent.width, _windowExtent.height);
+
+    resize_requested = false;
 }
 
