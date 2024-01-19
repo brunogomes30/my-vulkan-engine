@@ -11,6 +11,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_vulkan.h"
+#include <vk_loader.h>
 
 
 #define SHADERS_PATH(VAR) "../../shaders/"#VAR
@@ -81,6 +82,7 @@ public:
 
 	//draw resources
 	AllocatedImage _drawImage;
+	AllocatedImage _depthImage;
 	VkExtent2D _drawExtent;
 
 	DescriptorAllocator globalDescriptorAllocator;
@@ -100,14 +102,13 @@ public:
 	std::vector<ComputeEffect> backgroundEffects;
 	int currentBackgroundEffect{ 0 };
 
-	VkPipelineLayout _trianglePipelineLayout;
-	VkPipeline _trianglePipeline;
-
 	//Mesh
 	VkPipelineLayout _meshPipelineLayout;
 	VkPipeline _meshPipeline;
 
 	GPUMeshBuffers rectangle;
+
+	std::vector<std::shared_ptr<MeshAsset>> testMeshes;
 
 	
 
@@ -125,7 +126,7 @@ public:
 	void run();
 
 	void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
-
+	GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 	//Added functions below
 
 private:
@@ -136,7 +137,6 @@ private:
 	void init_sync_structures();
 	void init_descriptors();
 	void init_pipelines();
-	void init_triangle_pipeline();
 	void init_background_pipelines();
 	void init_mesh_pipeline();
 	void init_imgui();
@@ -145,7 +145,7 @@ private:
 	AllocatedBuffer create_buffer(size_t allocateSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 	void destroy_buffer(const AllocatedBuffer& buffer);
 
-	GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
+	
 	void draw_background(VkCommandBuffer cmd);
 	void draw_geometry(VkCommandBuffer cmd);
 	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
