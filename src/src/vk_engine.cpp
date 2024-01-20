@@ -18,6 +18,7 @@
 
 #include <vk_loader.h>
 #include <glm/gtx/transform.hpp>
+#include<controller/texture_controller.h>
 
 VulkanEngine* loadedEngine = nullptr;
 
@@ -158,6 +159,11 @@ void VulkanEngine::init_descriptors() {
         builder.add_binding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         _gpuSceneDataDescriptorLayout = builder.build(_device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
     }
+    {
+        DescriptorLayoutBuilder builder;
+        builder.add_binding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        _singleImageDescriptorLayout = builder.build(_device, VK_SHADER_STAGE_FRAGMENT_BIT);
+    }
 }
 
 void VulkanEngine::init_pipelines() {
@@ -213,7 +219,7 @@ void VulkanEngine::init_background_pipelines() {
     gradient.layout = _gradientPipelineLayout;
     gradient.name = "gradient";
     gradient.data = {};
-
+    
     //default colors
     gradient.data.data1 = glm::vec4(1, 0, 0, 1);
     gradient.data.data2 = glm::vec4(0, 0, 1, 1);
@@ -248,7 +254,7 @@ void VulkanEngine::init_background_pipelines() {
 
 void VulkanEngine::init_mesh_pipeline() {
     VkShaderModule meshFragShader;
-    if (!vkutil::load_shader_module(SHADERS_PATH(colored_triangle_mesh.frag.spv), _device, &meshFragShader)) {
+    if (!vkutil::load_shader_module(SHADERS_PATH(tex_image.frag.spv), _device, &meshFragShader)) {
         fmt::print("Error when building the triangle mesh fragment shader module");
     }
     VkShaderModule meshVertexShader;
@@ -264,6 +270,8 @@ void VulkanEngine::init_mesh_pipeline() {
     VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::pipeline_layout_create_info();
     pipeline_layout_info.pPushConstantRanges = &bufferRange;
     pipeline_layout_info.pushConstantRangeCount = 1;
+    pipeline_layout_info.pSetLayouts = &_singleImageDescriptorLayout;
+    pipeline_layout_info.setLayoutCount = 1;
 
 
     VK_CHECK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_meshPipelineLayout));
@@ -308,6 +316,43 @@ void VulkanEngine::init_mesh_pipeline() {
 
 void VulkanEngine::init_default_data() {
     testMeshes = loadGltfMeshes(this, "..\\..\\assets\\basicmesh.glb").value();
+    _textureController = TextureController(_allocator, _device, this);
+
+    //DELETE later
+    //3 default textures, white, grey, black. 1 pixel each
+    uint32_t white = 0xFFFFFFFF;
+    _whiteImage = _textureController.create_image((void*)&white, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    uint32_t grey = 0xAAAAAAFF;
+    _greyImage = _textureController.create_image((void*)&grey, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    uint32_t black = 0xFF000000;
+    _blackImage = _textureController.create_image((void*)&black, VkExtent3D{ 1, 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    //checkerboard image
+    uint32_t magenta = 0xFFFF00FF;
+    std::array<uint32_t, 16 * 16 > pixels; //for 16x16 checkerboard texture
+    for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < 16; y++) {
+            pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
+        }
+    }
+    _errorCheckerboardImage = _textureController.create_image(pixels.data(), VkExtent3D{ 16, 16, 1 }, VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_SAMPLED_BIT);
+
+    VkSamplerCreateInfo sampl = { .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+
+    sampl.magFilter = VK_FILTER_NEAREST;
+    sampl.minFilter = VK_FILTER_NEAREST;
+
+    vkCreateSampler(_device, &sampl, nullptr, &_defaultSamplerNearest);
+
+    sampl.magFilter = VK_FILTER_LINEAR;
+    sampl.minFilter = VK_FILTER_LINEAR;
+    vkCreateSampler(_device, &sampl, nullptr, &_defaultSamplerLinear);
 }
 
 
@@ -714,6 +759,16 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd) {
     vkCmdBeginRendering(cmd, &renderInfo);
     
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _meshPipeline);
+
+    //bind a texture
+    VkDescriptorSet imageSet = get_current_frame()._frameDescriptors.allocate(_device, _singleImageDescriptorLayout);
+    {
+        DescriptorWriter writer;
+        writer.write_image(0, _errorCheckerboardImage.imageView, _defaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+        writer.update_set(_device, imageSet);
+    }
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _meshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
 
     GPUDrawPushConstants push_constants;
     push_constants.worldMatrix = glm::mat4{ 1.f };

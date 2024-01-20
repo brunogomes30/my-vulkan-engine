@@ -1,27 +1,26 @@
 
 # Add source to this project's executable.
-add_executable (engine 
-  main.cpp
-  vk_types.h
-  vk_initializers.cpp
-  vk_initializers.h
-  vk_images.h
-  vk_images.cpp 
-  vk_descriptors.h
-  vk_descriptors.cpp
-  vk_pipelines.h
-  vk_pipelines.cpp
-  vk_engine.h
-  vk_engine.cpp
-  vk_loader.h
-  vk_loader.cpp
-  camera.cpp
-  camera.h
-)
+
+
+#print
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+# Generate a list of all .c & .h files in the current directory and sub directores.
+file(
+     GLOB_RECURSE source_list RELATIVE
+     "${CMAKE_CURRENT_SOURCE_DIR}"
+     *.cpp 
+     *.h
+    )
+add_executable (engine  ${source_list})
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source_list} PREFIX src/)
+
+
 
 set_property(TARGET engine PROPERTY CXX_STANDARD 20)
 target_compile_definitions(engine PUBLIC GLM_FORCE_DEPTH_ZERO_TO_ONE)
-target_include_directories(engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 target_link_libraries(engine PUBLIC vma glm Vulkan::Vulkan fmt::fmt stb_image SDL2::SDL2 vkbootstrap imgui fastgltf::fastgltf)
 

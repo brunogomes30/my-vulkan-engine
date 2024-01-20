@@ -7,12 +7,12 @@
 #include <vk_descriptors.h>
 #include "vk_mem_alloc.h"
 #include <vk_pipelines.h>
+#include<controller/texture_controller.h>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_vulkan.h"
 #include <vk_loader.h>
-
 
 #define SHADERS_PATH(VAR) "../../shaders/"#VAR
 
@@ -56,6 +56,7 @@ constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanEngine {
 public:
+	VulkanEngine(){};
 
 	bool _isInitialized{ false };
 	int _frameNumber {0};
@@ -102,6 +103,7 @@ public:
 	VkDescriptorSet _drawImageDescriptors;
 	VkDescriptorSetLayout _drawImageDescriptorLayout;
 
+
 	VkPipeline _gradientPipeline;
 	VkPipelineLayout _gradientPipelineLayout;
 
@@ -127,6 +129,9 @@ public:
 	GPUSceneData sceneData;
 
 	VkDescriptorSetLayout _gpuSceneDataDescriptorLayout;
+	VkDescriptorSetLayout _singleImageDescriptorLayout;
+
+	TextureController _textureController;
 
 	
 
@@ -147,6 +152,9 @@ public:
 	GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 	//Added functions below
 
+	AllocatedBuffer create_buffer(size_t allocateSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+	void destroy_buffer(const AllocatedBuffer& buffer);
+
 private:
 
 	void init_vulkan();
@@ -160,8 +168,7 @@ private:
 	void init_imgui();
 	void init_default_data();
 
-	AllocatedBuffer create_buffer(size_t allocateSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
-	void destroy_buffer(const AllocatedBuffer& buffer);
+	
 
 	
 	void draw_background(VkCommandBuffer cmd);
@@ -171,5 +178,14 @@ private:
 	void destroy_swapchain();
 
 	void resize_swapchain();
+
+	//Delete later
+	AllocatedImage _whiteImage;
+	AllocatedImage _blackImage;
+	AllocatedImage _greyImage;
+	AllocatedImage _errorCheckerboardImage;
+
+	VkSampler _defaultSamplerLinear;
+	VkSampler _defaultSamplerNearest;
 
 };

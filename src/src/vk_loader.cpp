@@ -94,7 +94,8 @@ std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadGltfMeshes(VulkanEngi
 				});
 			}
 			
-			auto uv = p.findAttribute("TEXT_COORD_0");
+			// LOAD UVs
+			auto uv = p.findAttribute("TEXCOORD_0");
 			if (uv != p.attributes.end()) {
 				fastgltf::iterateAccessorWithIndex<glm::vec2>(gltf, gltf.accessors[(*uv).second],
 					[&](glm::vec2 v, size_t index) {
