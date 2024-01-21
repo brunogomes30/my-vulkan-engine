@@ -123,8 +123,18 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
 
     // load all textures
     for (fastgltf::Image& image : gltf.images) {
+        std::optional<AllocatedImage> img = engine->_textureController.load_image(gltf, image);
 
-        images.push_back(engine->_errorCheckerboardImage);
+        if (img.has_value()) {
+            images.push_back(*img);
+            file.images[image.name.c_str()] = *img;
+        }
+        else {
+            // we failed to load, so lets give the slot a default white texture to not
+            // completely break loading
+            images.push_back(engine->_errorCheckerboardImage);
+            std::cout << "gltf failed to load texture " << image.name << std::endl;
+        }
     }
 
     // create buffer to hold the material data
