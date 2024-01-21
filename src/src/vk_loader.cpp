@@ -3,6 +3,7 @@
 #include "stb_image.h"
 #include <iostream>
 #include <vk_loader.h>
+#include<mesh/mesh_asset.h>
 
 #include "vk_engine.h"
 #include "vk_initializers.h"
@@ -117,7 +118,7 @@ std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadGltfMeshes(VulkanEngi
 		}
 
 		//display the vertex normals
-		constexpr bool bOverrideColors = true;
+		constexpr bool bOverrideColors = false;
 		if (bOverrideColors) {
 			for (Vertex& vtx : vertices) {
 				vtx.color = glm::vec4(vtx.normal, 1.f);

@@ -8,11 +8,14 @@
 #include "vk_mem_alloc.h"
 #include <vk_pipelines.h>
 #include<controller/texture_controller.h>
+#include<materials/materials.h>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
-#include "imgui_impl_vulkan.h"
+#include "imgui_impl_vulkan.h"	
 #include <vk_loader.h>
+#include<scene/scene.h>
+#include<scene/scene_data.h>
 
 #define SHADERS_PATH(VAR) "../../shaders/"#VAR
 
@@ -43,21 +46,10 @@ struct FrameData {
 
 };
 
-struct GPUSceneData {
-	glm::mat4 view;
-	glm::mat4 proj;
-	glm::mat4 viewproj;
-	glm::vec4 ambientColor;
-	glm::vec4 sunlightDirection; // w for sun power
-	glm::vec4 sunlightColor;
-};
-
 constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanEngine {
 public:
-	VulkanEngine(){};
-
 	bool _isInitialized{ false };
 	int _frameNumber {0};
 	bool stop_rendering{ false };
@@ -98,7 +90,7 @@ public:
 	VkExtent2D _drawExtent;
 	float renderScale = 1.f;
 
-	DescriptorAllocator globalDescriptorAllocator;
+	DescriptorAllocatorGrowable globalDescriptorAllocator;
 
 	VkDescriptorSet _drawImageDescriptors;
 	VkDescriptorSetLayout _drawImageDescriptorLayout;
@@ -133,6 +125,10 @@ public:
 
 	TextureController _textureController;
 
+	MaterialInstance defaultData;
+	GLTFMetallic_Roughness metalRoughMaterial;
+
+	Scene* scene = new Scene();
 	
 
 
