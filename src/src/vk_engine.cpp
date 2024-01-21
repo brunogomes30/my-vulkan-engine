@@ -52,6 +52,7 @@ void VulkanEngine::init()
     init_pipelines();
     init_imgui();
     init_default_data();
+    mainCamera.init();
     // everything went fine
     _isInitialized = true;
 }
@@ -851,7 +852,10 @@ void VulkanEngine::draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView)
 void VulkanEngine::draw()
 {
     sceneData.proj = glm::perspective(glm::radians(70.f), (float)_windowExtent.width / (float)_windowExtent.height, 10000.f, 0.1f);
+    mainCamera.update();
+    sceneData.view = mainCamera.getViewMatrix();
     scene->update_scene(sceneData);
+    
     //wait until the gpu has finished rendering the last frame. Timeout of 1 second
     VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame().renderFence, true, 1000000000));
 
@@ -980,7 +984,9 @@ void VulkanEngine::run()
                 }
             }
             //send SDL event to imgui for handling
+            mainCamera.processSDLEvent(e);
             ImGui_ImplSDL2_ProcessEvent(&e);
+            
         }
 
         // do not draw if we are minimized

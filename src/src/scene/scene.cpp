@@ -6,8 +6,6 @@ void Scene::update_scene(GPUSceneData& sceneData) {
 	mainDrawContext.OpaqueSurfaces.clear();
 
 	loadedNodes["Suzanne"]->Draw(glm::mat4{ 1.f }, mainDrawContext);
-
-	sceneData.view = glm::translate(glm::vec3{ 0,0,-5 });
 	// camera projection
 	//sceneData.proj = glm::perspective(glm::radians(70.f), (float)_windowExtent.width / (float)_windowExtent.height, 10000.f, 0.1f);
 

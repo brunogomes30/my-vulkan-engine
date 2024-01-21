@@ -16,6 +16,7 @@
 #include <vk_loader.h>
 #include<scene/scene.h>
 #include<scene/scene_data.h>
+#include<camera/camera.h>
 
 #define SHADERS_PATH(VAR) "../../shaders/"#VAR
 
@@ -129,6 +130,7 @@ public:
 	GLTFMetallic_Roughness metalRoughMaterial;
 
 	Scene* scene = new Scene();
+	Camera mainCamera;
 	
 
 
