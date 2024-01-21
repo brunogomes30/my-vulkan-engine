@@ -27,7 +27,7 @@ void Camera::processSDLEvent(SDL_Event& e)
     }
 
     if (e.type == SDL_MOUSEMOTION) {
-        yaw += (float)e.motion.xrel / 200.f;
+        yaw -= (float)e.motion.xrel / 200.f;
         pitch -= (float)e.motion.yrel / 200.f;
     }
 }
@@ -55,7 +55,7 @@ glm::mat4 Camera::getRotationMatrix()
 
 void Camera::init() {
     velocity = glm::vec3(0.f);
-    position = glm::vec3(0, 0, 5);
+    position = glm::vec3(30.f, -00.f, -085.f);
 
     pitch = 0;
     yaw = 0;

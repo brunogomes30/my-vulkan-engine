@@ -5,7 +5,6 @@
 void Scene::update_scene(GPUSceneData& sceneData) {
 	mainDrawContext.OpaqueSurfaces.clear();
 
-	loadedNodes["Suzanne"]->Draw(glm::mat4{ 1.f }, mainDrawContext);
 	// camera projection
 	//sceneData.proj = glm::perspective(glm::radians(70.f), (float)_windowExtent.width / (float)_windowExtent.height, 10000.f, 0.1f);
 
@@ -18,14 +17,8 @@ void Scene::update_scene(GPUSceneData& sceneData) {
 	sceneData.ambientColor = glm::vec4(.1f);
 	sceneData.sunlightColor = glm::vec4(1.f);
 	sceneData.sunlightDirection = glm::vec4(0, 1, 0.5, 1.f);
-
-	for (int x = -3; x < 3; x++) {
-
-		glm::mat4 scale = glm::scale(glm::vec3{ 0.2 });
-		glm::mat4 translation = glm::translate(glm::vec3{ x, -x, 0 });
-
-		loadedNodes["Cube"]->Draw(translation * scale, mainDrawContext);
-	}
+	
+	loadedGLTF->Draw(glm::mat4{ 1.f }, mainDrawContext);
 }
 
 void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet globalDescriptor)

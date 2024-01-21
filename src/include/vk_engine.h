@@ -131,6 +131,8 @@ public:
 
 	Scene* scene = new Scene();
 	Camera mainCamera;
+
+	std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
 	
 
 
@@ -152,6 +154,15 @@ public:
 
 	AllocatedBuffer create_buffer(size_t allocateSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 	void destroy_buffer(const AllocatedBuffer& buffer);
+
+	// Temporary public TODO::
+	AllocatedImage _errorCheckerboardImage;
+	//Delete later
+	AllocatedImage _whiteImage;
+	AllocatedImage _blackImage;
+	AllocatedImage _greyImage;
+	VkSampler _defaultSamplerLinear;
+	VkSampler _defaultSamplerNearest;
 
 private:
 
@@ -176,14 +187,6 @@ private:
 	void destroy_swapchain();
 
 	void resize_swapchain();
-
-	//Delete later
-	AllocatedImage _whiteImage;
-	AllocatedImage _blackImage;
-	AllocatedImage _greyImage;
-	AllocatedImage _errorCheckerboardImage;
-
-	VkSampler _defaultSamplerLinear;
-	VkSampler _defaultSamplerNearest;
+	
 
 };

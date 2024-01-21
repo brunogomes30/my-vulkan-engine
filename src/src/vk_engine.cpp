@@ -22,6 +22,8 @@
 #include<materials/materials.h>
 #include<node/mesh_node.h>
 
+#include<loader/loader_gltf.h>
+
 VulkanEngine* loadedEngine = nullptr;
 
 VulkanEngine& VulkanEngine::Get() { return *loadedEngine; }
@@ -53,6 +55,14 @@ void VulkanEngine::init()
     init_imgui();
     init_default_data();
     mainCamera.init();
+
+    std::string structurePath = { "..\\..\\assets\\structure.glb" };
+    auto structureFile = loader_gltf::loadGltf(this, structurePath);
+
+    assert(structureFile.has_value());
+
+    loadedScenes["structure"] = *structureFile;
+    scene->set_loadedGLTF(loadedScenes["structure"]);
     // everything went fine
     _isInitialized = true;
 }
@@ -381,20 +391,10 @@ void VulkanEngine::init_default_data() {
     materialResources.dataBufferOffset = 0;
 
     defaultData = metalRoughMaterial.write_material(_device, MaterialPass::MainColor, materialResources, globalDescriptorAllocator);
-
-    for (auto& m : testMeshes) {
-        std::shared_ptr<MeshNode> newNode = std::make_shared<MeshNode>();
-        newNode->mesh = m;
-
-        newNode->localTransform = glm::mat4{ 1.f };
-        newNode->worldTransform = glm::mat4{ 1.f };
-
-        for (auto& s : newNode->mesh->surfaces) {
-            s.material = std::make_shared<MaterialInstance>(defaultData);
-        }
-
-        scene->load_node(m->name, newNode);
-    }
+    std::shared_ptr<GLTFMaterial> newMaterial = std::make_shared<GLTFMaterial>();
+    newMaterial->data = defaultData;
+    //loadedScenes["structure"]->Draw(glm::mat4{ 1.f }, mainDrawContext);
+    
 }
 
 
@@ -693,7 +693,10 @@ void VulkanEngine::immediate_submit(std::function<void(VkCommandBuffer cmd)>&& f
 void VulkanEngine::cleanup()
 {
     if (_isInitialized) {
+        // make sure the gpu has stopped doing its things
         vkDeviceWaitIdle(_device);
+
+        loadedScenes.clear();
         _mainDeletionQueue.flush();
 
         //Clean up sync structures

@@ -99,3 +99,7 @@ struct MaterialInstance {
     VkDescriptorSet materialSet;
     MaterialPass passType;
 };
+
+struct GLTFMaterial {
+    MaterialInstance data;
+};
