@@ -1,7 +1,11 @@
 #include<camera/camera.h>
 
+#include <iostream>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+bool leftMousePressed = false;
+bool shiftPressed = false;
 
 void Camera::update()
 {
@@ -11,12 +15,13 @@ void Camera::update()
 
 void Camera::processSDLEvent(SDL_Event& e)
 {
-    const float speed = 0.25;
+    const float speed = shiftPressed ? 3 : 1;
     if (e.type == SDL_KEYDOWN) {
         if (e.key.keysym.sym == SDLK_w) { velocity.z = -speed; }
         if (e.key.keysym.sym == SDLK_s) { velocity.z = speed; }
         if (e.key.keysym.sym == SDLK_a) { velocity.x = -speed; }
         if (e.key.keysym.sym == SDLK_d) { velocity.x = speed; }
+        if (e.key.keysym.sym == SDLK_LSHIFT) { shiftPressed = true; }
     }
 
     if (e.type == SDL_KEYUP) {
@@ -24,9 +29,19 @@ void Camera::processSDLEvent(SDL_Event& e)
         if (e.key.keysym.sym == SDLK_s) { velocity.z = 0; }
         if (e.key.keysym.sym == SDLK_a) { velocity.x = 0; }
         if (e.key.keysym.sym == SDLK_d) { velocity.x = 0; }
+        if (e.key.keysym.sym == SDLK_LSHIFT) { shiftPressed = false;}
     }
-
-    if (e.type == SDL_MOUSEMOTION) {
+    if (e.type == SDL_MOUSEBUTTONDOWN) {
+        if(e.button.button == SDL_BUTTON_LEFT) {
+            leftMousePressed = true;
+        }
+    }
+    if (e.type == SDL_MOUSEBUTTONUP) {
+        if (e.button.button == SDL_BUTTON_LEFT) {
+            leftMousePressed = false;
+        }
+    }
+    if (e.type == SDL_MOUSEMOTION && leftMousePressed) {
         yaw += (float)e.motion.xrel / 200.f;
         pitch -= (float)e.motion.yrel / 200.f;
     }

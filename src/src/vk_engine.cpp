@@ -56,13 +56,13 @@ void VulkanEngine::init()
     init_default_data();
     mainCamera.init();
 
-    std::string structurePath = { "..\\..\\assets\\structure.glb" };
+    std::string structurePath = { "..\\..\\assets\\littlest_neo_tokyo.glb" };
     auto structureFile = loader_gltf::loadGltf(this, structurePath);
 
     assert(structureFile.has_value());
 
-    loadedScenes["structure"] = *structureFile;
-    scene->set_loadedGLTF(loadedScenes["structure"]);
+    loadedScenes["littlest_neo_tokyo"] = *structureFile;
+    scene->set_loadedGLTF(loadedScenes["littlest_neo_tokyo"]);
     // everything went fine
     _isInitialized = true;
 }
