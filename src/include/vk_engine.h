@@ -17,6 +17,7 @@
 #include<scene/scene.h>
 #include<scene/scene_data.h>
 #include<camera/camera.h>
+#include<stats/engine_stats.h>
 
 #define SHADERS_PATH(VAR) "../../shaders/"#VAR
 
@@ -133,6 +134,8 @@ public:
 	Camera mainCamera;
 
 	std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
+
+	EngineStats stats;
 	
 
 

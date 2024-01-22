@@ -777,7 +777,11 @@ void VulkanEngine::draw_background(VkCommandBuffer cmd)
 }
 
 void VulkanEngine::draw_geometry(VkCommandBuffer cmd) {
-
+     //begin clock
+    stats.drawcall_count = 0;
+    stats.triangle_count = 0;
+    stats.mesh_draw_time = 0;
+    auto start = std::chrono::system_clock::now();
     //allocate a new uniform buffer for the scene data
     AllocatedBuffer gpuSceneDataBuffer = create_buffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
@@ -836,7 +840,13 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd) {
 
     scene->draw_scene(cmd, globalDescriptor);
     
+    auto end = std::chrono::system_clock::now();
 
+    //convert to microseconds (integer), and then come back to miliseconds
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    stats.add_mesh_draw_time(elapsed.count() / 1000.f);
+    stats.add_triangle_count(scene->sceneStats.triangle_count);
+    stats.add_drawcall_count(scene->sceneStats.drawcall_count);
     vkCmdEndRendering(cmd);
 }
 
@@ -858,6 +868,7 @@ void VulkanEngine::draw()
     mainCamera.update();
     sceneData.view = mainCamera.getViewMatrix();
     scene->update_scene(sceneData);
+    stats.scene_update_time = scene->sceneStats.scene_update_time;
     
     //wait until the gpu has finished rendering the last frame. Timeout of 1 second
     VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame().renderFence, true, 1000000000));
@@ -972,6 +983,8 @@ void VulkanEngine::run()
 
     // main loop
     while (!bQuit) {
+        //begin clock
+        auto start = std::chrono::system_clock::now();
         // Handle events on queue
         while (SDL_PollEvent(&e) != 0) {
             // close the window when user alt-f4s or clicks the X button
@@ -1007,7 +1020,6 @@ void VulkanEngine::run()
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplSDL2_NewFrame(_window);
         ImGui::NewFrame();
-
         //some imgui UI to test
         if (ImGui::Begin("background")) {
             ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
@@ -1023,10 +1035,30 @@ void VulkanEngine::run()
 
             ImGui::End();
         }
+        ImGui::Begin("Stats");
+
+        ImGui::Text("frametime %f ms", stats.frametime);
+        ImGui::Text("draw time %f ms", stats.mesh_draw_time);
+        ImGui::Text("update time %f ms", stats.scene_update_time);
+        ImGui::Text("triangles %i", stats.triangle_count);
+        ImGui::Text("draws %i", stats.drawcall_count);
+        ImGui::End();
+
+
         //make imgui calculate internal draw structures
         ImGui::Render();
 
         draw();
+
+
+
+        
+        //get clock again, compare with start clock
+        auto end = std::chrono::system_clock::now();
+
+        //convert to microseconds (integer), and then come back to miliseconds
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        stats.frametime = elapsed.count() / 1000.f;
     }
 }
 

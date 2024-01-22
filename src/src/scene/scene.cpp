@@ -2,7 +2,10 @@
 #include<node/node.h>
 #include<vk_types.h>
 #include <glm/gtx/transform.hpp>
+#include <chrono>
 void Scene::update_scene(GPUSceneData& sceneData) {
+	//begin clock
+	auto start = std::chrono::system_clock::now();
 	mainDrawContext.OpaqueSurfaces.clear();
 
 	// camera projection
@@ -19,10 +22,16 @@ void Scene::update_scene(GPUSceneData& sceneData) {
 	sceneData.sunlightDirection = glm::vec4(0, 1, 0.5, 1.f);
 	
 	loadedGLTF->Draw(glm::mat4{ 1.f }, mainDrawContext);
+	//end clock
+	auto end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end - start;
+	sceneStats.scene_update_time = elapsed_seconds.count();
 }
 
 void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet globalDescriptor)
 {
+    sceneStats.drawcall_count = 0;
+    sceneStats.triangle_count = 0;
 	for (const RenderObject& draw : mainDrawContext.OpaqueSurfaces) {
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.material->pipeline->pipeline);
@@ -37,6 +46,8 @@ void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet globalDescriptor)
 		vkCmdPushConstants(cmd, draw.material->pipeline->layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
 
 		vkCmdDrawIndexed(cmd, draw.indexCount, 1, draw.firstIndex, 0, 0);
+        sceneStats.drawcall_count++;
+        sceneStats.triangle_count += draw.indexCount / 3;
 	}
 }
 

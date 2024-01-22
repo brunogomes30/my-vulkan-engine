@@ -1,6 +1,7 @@
 #pragma once
 #include <draw/draw_context.h>
 #include<scene/scene_data.h>
+#include<stats/scene_stats.h>
 #include<loader/loaded_gltf.h>
 class Node;
 
@@ -11,6 +12,8 @@ private:
 	std::shared_ptr<LoadedGLTF> loadedGLTF;
 	
 public:
+
+    SceneStats sceneStats;
 	//void init();
 	void update_scene(GPUSceneData& sceneData);
 	void draw_scene(VkCommandBuffer& cmd, VkDescriptorSet globalDescriptor);
