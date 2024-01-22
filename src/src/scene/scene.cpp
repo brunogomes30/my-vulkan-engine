@@ -28,17 +28,21 @@ void Scene::update_scene(GPUSceneData& sceneData) {
 	sceneStats.scene_update_time = elapsed_seconds.count();
 }
 
-void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet globalDescriptor)
-{
+void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet& globalDescriptor, const GPUSceneData& sceneData)
+{	
     sceneStats.drawcall_count = 0;
     sceneStats.triangle_count = 0;
-	for (const RenderObject& draw : mainDrawContext.OpaqueSurfaces) {
-
+	sort_drawables(sceneData);
+	VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
+	for (const uint32_t i : opaque_draws) {
+		const RenderObject& draw = mainDrawContext.OpaqueSurfaces[i];
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.material->pipeline->pipeline);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.material->pipeline->layout, 0, 1, &globalDescriptor, 0, nullptr);
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.material->pipeline->layout, 1, 1, &draw.material->materialSet, 0, nullptr);
-
-		vkCmdBindIndexBuffer(cmd, draw.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		if (draw.indexBuffer != lastIndexBuffer) {
+			vkCmdBindIndexBuffer(cmd, draw.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			lastIndexBuffer = draw.indexBuffer;
+		}
 
 		GPUDrawPushConstants pushConstants;
 		pushConstants.vertexBuffer = draw.vertexBufferAddress;
@@ -49,6 +53,31 @@ void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet globalDescriptor)
         sceneStats.drawcall_count++;
         sceneStats.triangle_count += draw.indexCount / 3;
 	}
+}
+
+void Scene::sort_drawables(const GPUSceneData& sceneData) {
+	std::vector<uint32_t> opaque_draws;
+	opaque_draws.reserve(mainDrawContext.OpaqueSurfaces.size());
+
+	for (uint32_t i = 0; i < mainDrawContext.OpaqueSurfaces.size(); i++) {
+		if (bounds::is_visible(mainDrawContext.OpaqueSurfaces[i], sceneData.viewproj)) {
+			opaque_draws.push_back(i);
+		}
+		
+	}
+
+	// sort the opaque surfaces by material and mesh
+	std::sort(opaque_draws.begin(), opaque_draws.end(), [&](const auto& iA, const auto& iB) {
+		const RenderObject& A = mainDrawContext.OpaqueSurfaces[iA];
+		const RenderObject& B = mainDrawContext.OpaqueSurfaces[iB];
+		if (A.material == B.material) {
+			return A.indexBuffer < B.indexBuffer;
+		}
+		else {
+			return A.material < B.material;
+		}
+	});
+	this->opaque_draws = opaque_draws;
 }
 
 void Scene::load_node(std::string name, std::shared_ptr<Node> node) {

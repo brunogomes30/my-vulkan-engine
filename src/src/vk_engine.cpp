@@ -838,7 +838,7 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd) {
     vkCmdPushConstants(cmd, _meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
     vkCmdBindIndexBuffer(cmd, testMeshes[2]->meshBuffers.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-    scene->draw_scene(cmd, globalDescriptor);
+    scene->draw_scene(cmd, globalDescriptor, sceneData);
     
     auto end = std::chrono::system_clock::now();
 

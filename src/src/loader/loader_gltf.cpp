@@ -44,6 +44,22 @@ VkSamplerMipmapMode extract_mipmap_mode(fastgltf::Filter filter)
     }
 }
 
+Bounds calculate_bounds(const std::vector<Vertex>& vertices, const int& initial_vtx){
+    //loop the vertices of this surface, find min/max bounds
+    glm::vec3 minpos = vertices[initial_vtx].position;
+    glm::vec3 maxpos = vertices[initial_vtx].position;
+    for (int i = initial_vtx; i < vertices.size(); i++) {
+        minpos = glm::min(minpos, vertices[i].position);
+        maxpos = glm::max(maxpos, vertices[i].position);
+    }
+    Bounds bounds {};
+    // calculate origin and extents from the min/max, use extent lenght for radius
+    bounds.origin = (maxpos + minpos) / 2.f;
+    bounds.extents = (maxpos - minpos) / 2.f;
+    bounds.sphereRadius = glm::length(bounds.extents);
+    return bounds;
+}
+
 
 std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* engine, std::string_view filePath)
 {
@@ -274,6 +290,8 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
                 else {
                     newSurface.material = materials[0];
                 }
+
+                newSurface.bounds = calculate_bounds(vertices, initial_vtx);
 
                 newmesh->surfaces.push_back(newSurface);
             }
