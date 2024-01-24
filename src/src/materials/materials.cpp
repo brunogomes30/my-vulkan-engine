@@ -5,12 +5,12 @@
 void GLTFMetallic_Roughness::build_pipelines(VulkanEngine* engine)
 {
 	VkShaderModule meshFragShader;
-	if (!vkutil::load_shader_module("../../shaders/mesh.frag.spv", engine->_device, &meshFragShader)) {
+	if (!vkutil::load_shader_module("../../shaders/mesh.frag.spv", engine->_components->device, &meshFragShader)) {
 		fmt::println("Error when building the triangle fragment shader module");
 	}
 
 	VkShaderModule meshVertexShader;
-	if (!vkutil::load_shader_module("../../shaders/mesh.vert.spv", engine->_device, &meshVertexShader)) {
+	if (!vkutil::load_shader_module("../../shaders/mesh.vert.spv", engine->_components->device, &meshVertexShader)) {
 		fmt::println("Error when building the triangle vertex shader module");
 	}
 
@@ -24,7 +24,7 @@ void GLTFMetallic_Roughness::build_pipelines(VulkanEngine* engine)
 	layoutBuilder.add_binding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	layoutBuilder.add_binding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
-	materialLayout = layoutBuilder.build(engine->_device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	materialLayout = layoutBuilder.build(engine->_components->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkDescriptorSetLayout layouts[] = { engine->_gpuSceneDataDescriptorLayout,
 		materialLayout };
@@ -36,7 +36,7 @@ void GLTFMetallic_Roughness::build_pipelines(VulkanEngine* engine)
 	mesh_layout_info.pushConstantRangeCount = 1;
 
 	VkPipelineLayout newLayout;
-	VK_CHECK(vkCreatePipelineLayout(engine->_device, &mesh_layout_info, nullptr, &newLayout));
+	VK_CHECK(vkCreatePipelineLayout(engine->_components->device, &mesh_layout_info, nullptr, &newLayout));
 
 	opaquePipeline.layout = newLayout;
 	transparentPipeline.layout = newLayout;
@@ -53,24 +53,24 @@ void GLTFMetallic_Roughness::build_pipelines(VulkanEngine* engine)
 	pipelineBuilder.enable_depthtest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
 
 	//render format
-	pipelineBuilder.set_color_attachment_format(engine->_drawImage.imageFormat);
-	pipelineBuilder.set_depth_format(engine->_depthImage.imageFormat);
+	pipelineBuilder.set_color_attachment_format(engine->_components->drawImage->imageFormat);
+	pipelineBuilder.set_depth_format(engine->_components->depthImage->imageFormat);
 
 	// use the triangle layout we created
 	pipelineBuilder._pipelineLayout = newLayout;
 
 	// finally build the pipeline
-	opaquePipeline.pipeline = pipelineBuilder.build_pipeline(engine->_device);
+	opaquePipeline.pipeline = pipelineBuilder.build_pipeline(engine->_components->device);
 
 	// create the transparent variant
 	pipelineBuilder.enable_blending_additive();
 
 	pipelineBuilder.enable_depthtest(false, VK_COMPARE_OP_GREATER_OR_EQUAL);
 
-	transparentPipeline.pipeline = pipelineBuilder.build_pipeline(engine->_device);
+	transparentPipeline.pipeline = pipelineBuilder.build_pipeline(engine->_components->device);
 
-	vkDestroyShaderModule(engine->_device, meshFragShader, nullptr);
-	vkDestroyShaderModule(engine->_device, meshVertexShader, nullptr);
+	vkDestroyShaderModule(engine->_components->device, meshFragShader, nullptr);
+	vkDestroyShaderModule(engine->_components->device, meshVertexShader, nullptr);
 }
 
 void GLTFMetallic_Roughness::clear_resources(VkDevice device)

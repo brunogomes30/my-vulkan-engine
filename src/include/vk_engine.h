@@ -18,6 +18,9 @@
 #include<scene/scene_data.h>
 #include<camera/camera.h>
 #include<stats/engine_stats.h>
+#include<ui/ui_controller.h>
+#include<vulkan_engine/engine_components.h>
+#include<vulkan_engine/swapchain_controller.h>
 
 #define SHADERS_PATH(VAR) "../../shaders/"#VAR
 
@@ -67,13 +70,14 @@ public:
 	VkPhysicalDevice _chosenGPU; // GPU chosen as the default device
 	VkDevice _device; // Vulkan device for commands
 	VkSurfaceKHR _surface; // Vulkan window surface
+	std::shared_ptr<EngineComponents> _components;
 
-	VkSwapchainKHR  _swapchain;
-	VkFormat _swapchainImageFormat;
+	// VkSwapchainKHR  _swapchain; // ###
+	// VkFormat _swapchainImageFormat; // ###
 
-	std::vector<VkImage> _swapchainImages;
-	std::vector<VkImageView> _swapchainImageViews;
-	VkExtent2D _swapchainExtent;
+	// std::vector<VkImage> _swapchainImages; // ###
+	// std::vector<VkImageView> _swapchainImageViews; // ###
+	// VkExtent2D _swapchainExtent; // ###
 
 	FrameData _frames[FRAME_OVERLAP];
 
@@ -89,7 +93,7 @@ public:
 	//draw resources
 	AllocatedImage _drawImage;
 	AllocatedImage _depthImage;
-	VkExtent2D _drawExtent;
+	VkExtent2D _drawExtent; // ###
 	float renderScale = 1.f;
 
 	DescriptorAllocatorGrowable globalDescriptorAllocator;
@@ -126,6 +130,7 @@ public:
 	VkDescriptorSetLayout _singleImageDescriptorLayout;
 
 	TextureController _textureController;
+	SwapchainController _swapchainController;
 
 	MaterialInstance defaultData;
 	GLTFMetallic_Roughness metalRoughMaterial;
@@ -168,9 +173,11 @@ public:
 	VkSampler _defaultSamplerNearest;
 
 private:
+	UIController _uiController;
+
 
 	void init_vulkan();
-	void init_swapchain();
+	//void init_swapchain(); // ###
 	void init_commands();
 	void init_sync_structures();
 	void init_descriptors();
@@ -186,10 +193,10 @@ private:
 	void draw_background(VkCommandBuffer cmd);
 	void draw_geometry(VkCommandBuffer cmd);
 	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
-	void create_swapchain(uint32_t width, uint32_t height);
-	void destroy_swapchain();
 
-	void resize_swapchain();
+	//void create_swapchain(uint32_t width, uint32_t height); // ###
+	//void destroy_swapchain(); // ###
+	//void resize_swapchain(); // ###
 	
 
 };
