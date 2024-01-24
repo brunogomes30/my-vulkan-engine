@@ -72,13 +72,6 @@ public:
 	VkSurfaceKHR _surface; // Vulkan window surface
 	std::shared_ptr<EngineComponents> _components;
 
-	// VkSwapchainKHR  _swapchain; // ###
-	// VkFormat _swapchainImageFormat; // ###
-
-	// std::vector<VkImage> _swapchainImages; // ###
-	// std::vector<VkImageView> _swapchainImageViews; // ###
-	// VkExtent2D _swapchainExtent; // ###
-
 	FrameData _frames[FRAME_OVERLAP];
 
 	FrameData& get_current_frame() {return _frames[_frameNumber % FRAME_OVERLAP];};
@@ -177,7 +170,6 @@ private:
 
 
 	void init_vulkan();
-	//void init_swapchain(); // ###
 	void init_commands();
 	void init_sync_structures();
 	void init_descriptors();
@@ -193,10 +185,5 @@ private:
 	void draw_background(VkCommandBuffer cmd);
 	void draw_geometry(VkCommandBuffer cmd);
 	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
-
-	//void create_swapchain(uint32_t width, uint32_t height); // ###
-	//void destroy_swapchain(); // ###
-	//void resize_swapchain(); // ###
-	
 
 };
