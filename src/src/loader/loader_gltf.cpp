@@ -111,7 +111,7 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 },
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 } };
 
-    file.descriptorPool.init(engine->_device, gltf.materials.size(), sizes);
+    file.descriptorPool.init(engine->_components->device, gltf.materials.size(), sizes);
 
     // load samplers
     for (fastgltf::Sampler& sampler : gltf.samplers) {
@@ -126,7 +126,7 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
         sampl.mipmapMode = extract_mipmap_mode(sampler.minFilter.value_or(fastgltf::Filter::Nearest));
 
         VkSampler newSampler;
-        vkCreateSampler(engine->_device, &sampl, nullptr, &newSampler);
+        vkCreateSampler(engine->_components->device, &sampl, nullptr, &newSampler);
 
         file.samplers.push_back(newSampler);
     }
@@ -199,7 +199,7 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
             materialResources.colorSampler = file.samplers[sampler];
         }
         // build material
-        newMat->data = engine->metalRoughMaterial.write_material(engine->_device, passType, materialResources, file.descriptorPool);
+        newMat->data = engine->metalRoughMaterial.write_material(engine->_components->device, passType, materialResources, file.descriptorPool);
 
         data_index++;
 
