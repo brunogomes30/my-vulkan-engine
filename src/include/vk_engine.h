@@ -21,37 +21,7 @@
 #include<ui/ui_controller.h>
 #include<vulkan_engine/engine_components.h>
 #include<vulkan_engine/swapchain_controller.h>
-
-#define SHADERS_PATH(VAR) "../../shaders/"#VAR
-
-struct ComputePushConstants {
-	glm::vec4 data1;
-	glm::vec4 data2;
-	glm::vec4 data3;
-	glm::vec4 data4;
-};
-
-struct ComputeEffect {
-	const char* name;
-	
-	VkPipeline pipeline;
-	VkPipelineLayout layout;
-
-	ComputePushConstants data;
-};
-
-struct FrameData {
-	VkCommandPool commandPool;
-	VkCommandBuffer mainCommandBuffer;
-	VkSemaphore swapSemaphore, renderSemaphore;
-	VkFence renderFence;
-	DeletionQueue deletionQueue;
-
-	DescriptorAllocatorGrowable _frameDescriptors;
-
-};
-
-constexpr unsigned int FRAME_OVERLAP = 2;
+#include<vulkan_engine/pipeline_controller.h>
 
 class VulkanEngine {
 public:
@@ -69,9 +39,7 @@ public:
 	VkDebugUtilsMessengerEXT _debug_messenger; // Vulkan debug message handle
 	std::shared_ptr<EngineComponents> _components;
 
-	FrameData _frames[FRAME_OVERLAP];
-
-	FrameData& get_current_frame() {return _frames[_frameNumber % FRAME_OVERLAP];};
+	FrameData& get_current_frame() {return _components->frames[_frameNumber % FRAME_OVERLAP];};
 
 	VkQueue _graphicsQueue;
 	uint32_t _graphicsQueueFamily;
@@ -86,15 +54,6 @@ public:
 	VkExtent2D _drawExtent; // ###
 	float renderScale = 1.f;
 
-	DescriptorAllocatorGrowable globalDescriptorAllocator;
-
-	VkDescriptorSet _drawImageDescriptors;
-	VkDescriptorSetLayout _drawImageDescriptorLayout;
-
-
-	VkPipeline _gradientPipeline;
-	VkPipelineLayout _gradientPipelineLayout;
-
 	// immediate submit structures
 	VkFence _immediateFence;
 	VkCommandPool _immediateCommandPool;
@@ -105,8 +64,6 @@ public:
 	int currentBackgroundEffect{ 0 };
 
 	//Mesh
-	VkPipelineLayout _meshPipelineLayout;
-	VkPipeline _meshPipeline;
 
 	GPUMeshBuffers rectangle;
 
@@ -115,9 +72,6 @@ public:
 	bool resize_requested;
 
 	GPUSceneData sceneData;
-
-	VkDescriptorSetLayout _gpuSceneDataDescriptorLayout;
-	VkDescriptorSetLayout _singleImageDescriptorLayout;
 
 	TextureController _textureController;
 	SwapchainController _swapchainController;
@@ -165,14 +119,14 @@ public:
 private:
 	UIController _uiController;
 
+	PipelineController _pipelineController;
+	DescriptorController _descriptorController;
 
 	void init_vulkan();
 	void init_commands();
 	void init_sync_structures();
 	void init_descriptors();
 	void init_pipelines();
-	void init_background_pipelines();
-	void init_mesh_pipeline();
 	void init_imgui();
 	void init_default_data();
 	void draw_background(VkCommandBuffer cmd);
