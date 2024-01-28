@@ -5,11 +5,10 @@
 
 #include <vk_initializers.h>
 #include "VkBootstrap.h"
-void SwapchainController::init_swapchain(std::shared_ptr<EngineComponents> engineComponents, VkSurfaceKHR& surface, VkExtent2D& windowExtent)
+void SwapchainController::init_swapchain(std::shared_ptr<EngineComponents> engineComponents, VkExtent2D& windowExtent)
 {
     _engineComponents = engineComponents;
     _windowExtent = windowExtent;
-    _surface = surface;
     create_swapchain(_windowExtent.width, _windowExtent.height);
 
     VkExtent3D drawImageExtent = {
@@ -90,7 +89,7 @@ void SwapchainController::destroy_swapchain() {
 }
 
 void SwapchainController::create_swapchain(uint32_t width, uint32_t height) {
-    vkb::SwapchainBuilder  swapchainBuilder{ _engineComponents->chosenGPU, _engineComponents->device, _surface };
+    vkb::SwapchainBuilder  swapchainBuilder{ _engineComponents->chosenGPU, _engineComponents->device, _engineComponents->surface };
     swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
     vkb::Swapchain vkbSwapchain = swapchainBuilder

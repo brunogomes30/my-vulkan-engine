@@ -53,8 +53,7 @@ void VulkanEngine::init()
     _components->drawExtent = &_drawExtent;
     
     init_vulkan();
-    _components->surface = _surface;
-    _swapchainController.init_swapchain(_components, _surface, _windowExtent);
+    _swapchainController.init_swapchain(_components, _windowExtent);
     init_commands();
     init_sync_structures();
     init_descriptors();
@@ -88,7 +87,7 @@ void VulkanEngine::init_vulkan() {
     _instance = vkb_inst.instance;
     _debug_messenger = vkb_inst.debug_messenger;
 
-    SDL_Vulkan_CreateSurface(_window, _instance, &_surface);
+    SDL_Vulkan_CreateSurface(_window, _instance, &_components->surface);
 
     //Vulkan 1.3 features
     VkPhysicalDeviceVulkan13Features vk13features{};
@@ -107,7 +106,7 @@ void VulkanEngine::init_vulkan() {
 		.set_minimum_version(1, 2)
         .set_required_features_13(vk13features)
         .set_required_features_12(vk12features)
-		.set_surface(_surface)
+		.set_surface(_components->surface)
 		.select()
 		.value();
 
@@ -639,7 +638,7 @@ void VulkanEngine::cleanup()
 
         _swapchainController.destroy_swapchain();
 
-        vkDestroySurfaceKHR(_instance, _surface, nullptr);
+        vkDestroySurfaceKHR(_instance, _components->surface, nullptr);
         vkDestroyDevice(_components->device, nullptr);
 
         vkb::destroy_debug_utils_messenger(_instance, _debug_messenger);

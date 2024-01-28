@@ -67,9 +67,6 @@ public:
 	//Added variables below
 	VkInstance _instance; // Vulkan library handle
 	VkDebugUtilsMessengerEXT _debug_messenger; // Vulkan debug message handle
-	VkPhysicalDevice _chosenGPU; // GPU chosen as the default device
-	VkDevice _device; // Vulkan device for commands
-	VkSurfaceKHR _surface; // Vulkan window surface
 	std::shared_ptr<EngineComponents> _components;
 
 	FrameData _frames[FRAME_OVERLAP];

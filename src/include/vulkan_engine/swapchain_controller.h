@@ -17,7 +17,7 @@ public:
 	VkFormat swapchainImageFormat;
 
 public:
-	void init_swapchain(std::shared_ptr<EngineComponents> engineComponents, VkSurfaceKHR& surface, VkExtent2D& windowExtent);
+	void init_swapchain(std::shared_ptr<EngineComponents> engineComponents, VkExtent2D& windowExtent);
 	void create_swapchain(uint32_t width, uint32_t height);
 	void destroy_swapchain();
 	void resize_swapchain(struct SDL_Window* window, float renderScale);

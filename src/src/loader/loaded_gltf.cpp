@@ -10,7 +10,7 @@ void LoadedGLTF::Draw(const glm::mat4& topMatrix, DrawContext& ctx)
 
 void LoadedGLTF::clearAll()
 {
-    VkDevice dv = creator->_device;
+    VkDevice dv = creator->_components->device;
 
     descriptorPool.destroy_pools(dv);
     creator->destroy_buffer(materialDataBuffer);
