@@ -178,10 +178,6 @@ private:
 	void init_mesh_pipeline();
 	void init_imgui();
 	void init_default_data();
-
-	
-
-	
 	void draw_background(VkCommandBuffer cmd);
 	void draw_geometry(VkCommandBuffer cmd);
 	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
