@@ -5,7 +5,7 @@
 
 #include <vk_types.h>
 #include <vk_descriptors.h>
-#include "vk_mem_alloc.h"
+#include <vk_allocation_def.h>
 #include <vk_pipelines.h>
 #include<controller/texture_controller.h>
 #include<materials/materials.h>
@@ -22,6 +22,10 @@
 #include<vulkan_engine/engine_components.h>
 #include<vulkan_engine/swapchain_controller.h>
 #include<vulkan_engine/pipeline_controller.h>
+#include<vulkan_engine/draw_controller.h>
+#include<vulkan_engine/command_controller.h>
+#include<materials/material_controller.h>
+#include "vk_mem_alloc.h"
 
 class VulkanEngine {
 public:
@@ -30,12 +34,10 @@ public:
 	bool stop_rendering{ false };
 	VkExtent2D _windowExtent{ 1700 , 900 };
 
-	struct SDL_Window* _window{ nullptr };
 
 	static VulkanEngine& Get();
 
 	//Added variables below
-	VkInstance _instance; // Vulkan library handle
 	VkDebugUtilsMessengerEXT _debug_messenger; // Vulkan debug message handle
 	std::shared_ptr<EngineComponents> _components;
 
@@ -46,22 +48,12 @@ public:
 
 
 	DeletionQueue _mainDeletionQueue;
-	VmaAllocator _allocator;
 
 	//draw resources
 	AllocatedImage _drawImage;
 	AllocatedImage _depthImage;
 	VkExtent2D _drawExtent; // ###
 	float renderScale = 1.f;
-
-	// immediate submit structures
-	VkFence _immediateFence;
-	VkCommandPool _immediateCommandPool;
-	VkCommandBuffer _immediateCommandBuffer;
-
-	//Constants 
-	std::vector<ComputeEffect> backgroundEffects;
-	int currentBackgroundEffect{ 0 };
 
 	//Mesh
 
@@ -71,13 +63,12 @@ public:
 
 	bool resize_requested;
 
-	GPUSceneData sceneData;
+	GPUSceneData sceneData; // ### DrawController
 
 	TextureController _textureController;
 	SwapchainController _swapchainController;
 
-	MaterialInstance defaultData;
-	GLTFMetallic_Roughness metalRoughMaterial;
+	
 
 	Scene* scene = new Scene();
 	Camera mainCamera;
@@ -94,33 +85,28 @@ public:
 	//shuts down the engine
 	void cleanup();
 
-	//draw loop
-	void draw();
 
 	//run main loop
 	void run();
 
-	void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
 	GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 	//Added functions below
 
-	AllocatedBuffer create_buffer(size_t allocateSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
-	void destroy_buffer(const AllocatedBuffer& buffer);
+	
 
 	// Temporary public TODO::
-	AllocatedImage _errorCheckerboardImage;
-	//Delete later
-	AllocatedImage _whiteImage;
-	AllocatedImage _blackImage;
-	AllocatedImage _greyImage;
-	VkSampler _defaultSamplerLinear;
-	VkSampler _defaultSamplerNearest;
+	BufferAllocator _bufferAllocator;
+	MaterialController _materialController;
 
 private:
 	UIController _uiController;
 
 	PipelineController _pipelineController;
 	DescriptorController _descriptorController;
+	DrawController _drawController;
+	
+	
+	CommandController _commandController;
 
 	void init_vulkan();
 	void init_commands();
@@ -129,8 +115,5 @@ private:
 	void init_pipelines();
 	void init_imgui();
 	void init_default_data();
-	void draw_background(VkCommandBuffer cmd);
-	void draw_geometry(VkCommandBuffer cmd);
-	void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
 
 };

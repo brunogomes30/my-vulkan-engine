@@ -5,11 +5,12 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_vulkan.h"	
 #include <vk_initializers.h>
-void UIController::setup(const VkExtent2D& swapchainExtent, const VkDevice& device, ImGui_ImplVulkan_InitInfo& init_info)
+void UIController::init(std::shared_ptr<EngineComponents> engineComponents, SwapchainController* swapchainController, CommandController* commandController)
 {
-    /*
-    _swapchainExtent = swapchainExtent;
-    _device = device;
+    
+    _engineComponents = engineComponents;
+    _swapchainController = swapchainController;
+    _commandController = commandController;
 
     // 1: create descriptor pool for IMGUI
     //  the size of the pool is very oversize, but it's copied from imgui demo
@@ -33,23 +34,40 @@ void UIController::setup(const VkExtent2D& swapchainExtent, const VkDevice& devi
     pool_info.pPoolSizes = pool_sizes;
 
     VkDescriptorPool imguiPool;
-    VK_CHECK(vkCreateDescriptorPool(_device, &pool_info, nullptr, &imguiPool));
-
+    VK_CHECK(vkCreateDescriptorPool(_engineComponents->device, &pool_info, nullptr, &imguiPool));
+    
     // 2: initialize imgui library
 
     // this initializes the core structures of imgui
     ImGui::CreateContext();
 
     // this initializes imgui for SDL
-    ImGui_ImplSDL2_InitForVulkan(_window);
+    ImGui_ImplSDL2_InitForVulkan(_engineComponents->_window);
+
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = _engineComponents->instance;
+    init_info.PhysicalDevice = _engineComponents->chosenGPU;
+    init_info.Device = _engineComponents->device;
+    init_info.Queue = _engineComponents->graphicsQueue;
+    init_info.DescriptorPool = imguiPool;
+    init_info.MinImageCount = 3;
+    init_info.ImageCount = 3;
+    init_info.UseDynamicRendering = true;
+    init_info.ColorAttachmentFormat = swapchainController->swapchainImageFormat;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
     ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
 
     // execute a gpu command to upload imgui font textures
-    immediate_submit([&](VkCommandBuffer cmd) { ImGui_ImplVulkan_CreateFontsTexture(cmd); });
+    _commandController->immediate_submit([&](VkCommandBuffer cmd) { ImGui_ImplVulkan_CreateFontsTexture(cmd); });
 
     // clear font textures from cpu data
     ImGui_ImplVulkan_DestroyFontUploadObjects();
-    */
+    
+    _engineComponents->mainDeletionQueue->push_function([=]() {
+        vkDestroyDescriptorPool(_engineComponents->device, imguiPool, nullptr);
+        ImGui_ImplVulkan_Shutdown();
+    });
 }
 
 void UIController::render()
@@ -58,14 +76,21 @@ void UIController::render()
 
 void UIController::draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView)
 {
-    /*
+    
     VkRenderingAttachmentInfo colorAttachment = vkinit::attachment_info(targetImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    VkRenderingInfo renderInfo = vkinit::rendering_info(_swapchainExtent, &colorAttachment, nullptr);
+    VkRenderingInfo renderInfo = vkinit::rendering_info(_swapchainController->swapchainExtent, &colorAttachment, nullptr);
 
     vkCmdBeginRendering(cmd, &renderInfo);
 
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
 
     vkCmdEndRendering(cmd);
-    */
+    
+}
+
+void UIController::cleanup()
+{
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 }

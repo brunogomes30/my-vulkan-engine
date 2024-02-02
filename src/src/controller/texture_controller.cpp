@@ -5,6 +5,15 @@
 #include <stb_image.h>
 #include <vk_engine.h> // remove this dependency later
 
+void TextureController::init(std::shared_ptr<EngineComponents> engineComponents, BufferAllocator* bufferAllocator, CommandController* commandController)
+{
+    _engineComponents = engineComponents;
+	_allocator = engineComponents->allocator;
+	_bufferAllocator = bufferAllocator;
+	_commandController = commandController;
+	_device = engineComponents->device;
+}
+
 AllocatedImage TextureController::create_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped) {
 	AllocatedImage newImage;
 	newImage.imageFormat = format;
@@ -21,7 +30,7 @@ AllocatedImage TextureController::create_image(VkExtent3D size, VkFormat format,
 	allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	// allocate and create the image
-	VK_CHECK(vmaCreateImage(_engine->_allocator, &img_info, &allocinfo, &newImage.image, &newImage.allocation, nullptr));
+	VK_CHECK(vmaCreateImage(_engineComponents->allocator, &img_info, &allocinfo, &newImage.image, &newImage.allocation, nullptr));
 
 	// if the format is a depth format, we will need to have it use the correct
 	// aspect flag
@@ -41,13 +50,13 @@ AllocatedImage TextureController::create_image(VkExtent3D size, VkFormat format,
 
 AllocatedImage TextureController::create_image(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped) {
 	size_t data_size = size.depth * size.width * size.height * 4;
-	AllocatedBuffer uploadbuffer = _engine->create_buffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	AllocatedBuffer uploadbuffer = _bufferAllocator->create_buffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	memcpy(uploadbuffer.info.pMappedData, data, data_size);
 
 	AllocatedImage new_image = create_image(size, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, mipmapped);
 
-	_engine->immediate_submit([&](VkCommandBuffer cmd) {
+	_commandController->immediate_submit([&](VkCommandBuffer cmd) {
 		vkutil::transition_image(cmd, new_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkBufferImageCopy copyRegion = {};
@@ -74,7 +83,7 @@ AllocatedImage TextureController::create_image(void* data, VkExtent3D size, VkFo
 		
 	});
 
-	_engine->destroy_buffer(uploadbuffer);
+    _bufferAllocator->destroy_buffer(uploadbuffer);
 
 	return new_image;
 }
@@ -162,5 +171,5 @@ std::optional<AllocatedImage> TextureController::load_image(fastgltf::Asset& ass
 
 void TextureController::destroy_image(const AllocatedImage& img) {
 	vkDestroyImageView(_device, img.imageView, nullptr);
-	vmaDestroyImage(_engine->_allocator, img.image, img.allocation);
+	vmaDestroyImage(_engineComponents->allocator, img.image, img.allocation);
 }

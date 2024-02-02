@@ -3,6 +3,12 @@
 #include<vk_types.h>
 #include <glm/gtx/transform.hpp>
 #include <chrono>
+
+void Scene::init(Camera* camera) {
+	this->camera = camera;
+}
+
+
 void Scene::update_scene(GPUSceneData& sceneData) {
 	//begin clock
 	auto start = std::chrono::system_clock::now();

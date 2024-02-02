@@ -61,7 +61,7 @@ Bounds calculate_bounds(const std::vector<Vertex>& vertices, const int& initial_
 }
 
 
-std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* engine, std::string_view filePath)
+std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* engine, std::string_view filePath, MaterialController* materialController)
 {
     fmt::print("Loading GLTF: {}", filePath);
 
@@ -148,13 +148,13 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
         else {
             // we failed to load, so lets give the slot a default white texture to not
             // completely break loading
-            images.push_back(engine->_errorCheckerboardImage);
+            images.push_back(engine->_materialController.errorCheckerboardImage);
             std::cout << "gltf failed to load texture " << image.name << std::endl;
         }
     }
 
     // create buffer to hold the material data
-    file.materialDataBuffer = engine->create_buffer(sizeof(GLTFMetallic_Roughness::MaterialConstants) * gltf.materials.size(),
+    file.materialDataBuffer = engine->_bufferAllocator.create_buffer(sizeof(GLTFMetallic_Roughness::MaterialConstants) * gltf.materials.size(),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
     int data_index = 0;
     GLTFMetallic_Roughness::MaterialConstants* sceneMaterialConstants = (GLTFMetallic_Roughness::MaterialConstants*)file.materialDataBuffer.info.pMappedData;
@@ -182,10 +182,10 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
 
         GLTFMetallic_Roughness::MaterialResources materialResources;
         // default the material textures
-        materialResources.colorImage = engine->_whiteImage;
-        materialResources.colorSampler = engine->_defaultSamplerLinear;
-        materialResources.metalRoughImage = engine->_whiteImage;
-        materialResources.metalRoughSampler = engine->_defaultSamplerLinear;
+        materialResources.colorImage = engine->_materialController.whiteImage;
+        materialResources.colorSampler = engine->_materialController.defaultSamplerLinear;
+        materialResources.metalRoughImage = engine->_materialController.whiteImage;
+        materialResources.metalRoughSampler = engine->_materialController.defaultSamplerLinear;
 
         // set the uniform buffer for the material data
         materialResources.dataBuffer = file.materialDataBuffer.buffer;
@@ -199,7 +199,7 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
             materialResources.colorSampler = file.samplers[sampler];
         }
         // build material
-        newMat->data = engine->metalRoughMaterial.write_material(engine->_components->device, passType, materialResources, file.descriptorPool);
+        newMat->data = materialController->metalRoughMaterial.write_material(engine->_components->device, passType, materialResources, file.descriptorPool);
 
         data_index++;
 

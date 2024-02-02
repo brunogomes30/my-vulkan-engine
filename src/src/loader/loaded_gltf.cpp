@@ -13,17 +13,17 @@ void LoadedGLTF::clearAll()
     VkDevice dv = creator->_components->device;
 
     descriptorPool.destroy_pools(dv);
-    creator->destroy_buffer(materialDataBuffer);
+    creator->_bufferAllocator.destroy_buffer(materialDataBuffer);
 
     for (auto& [k, v] : meshes) {
 
-        creator->destroy_buffer(v->meshBuffers.indexBuffer);
-        creator->destroy_buffer(v->meshBuffers.vertexBuffer);
+        creator->_bufferAllocator.destroy_buffer(v->meshBuffers.indexBuffer);
+        creator->_bufferAllocator.destroy_buffer(v->meshBuffers.vertexBuffer);
     }
 
     for (auto& [k, v] : images) {
 
-        if (v.image == creator->_errorCheckerboardImage.image) {
+        if (v.image == creator->_materialController.errorCheckerboardImage.image) {
             //dont destroy the default images
             continue;
         }
