@@ -19,7 +19,7 @@ public:
 	VkPipelineRenderingCreateInfo _renderInfo;
 	VkFormat _colorAttachmentformat;
 
-	
+
 	PipelineBuilder() { clear(); }
 
 	void clear();

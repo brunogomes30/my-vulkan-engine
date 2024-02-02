@@ -26,10 +26,8 @@ struct EngineComponents{
 	AllocatedImage* drawImage;
 	AllocatedImage* depthImage;
 	VkInstance instance; // Vulkan library handle
-
 	VmaAllocator allocator;
 	VkExtent2D* drawExtent;
 	struct SDL_Window* _window;
-
 	FrameData frames[FRAME_OVERLAP];
 };

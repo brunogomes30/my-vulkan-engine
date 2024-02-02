@@ -30,7 +30,7 @@ public:
 		UIController* uiController,
 		EngineStats* stats);
 	void draw(class Scene* scene, FrameData& frame);
-	
+
 	GPUSceneData sceneData;
 private:
 

@@ -30,82 +30,55 @@
 class VulkanEngine {
 public:
 	bool _isInitialized{ false };
-	int _frameNumber {0};
+	int _frameNumber{ 0 };
 	bool stop_rendering{ false };
 	VkExtent2D _windowExtent{ 1700 , 900 };
-
-
-	static VulkanEngine& Get();
-
-	//Added variables below
+	bool resize_requested;
 	VkDebugUtilsMessengerEXT _debug_messenger; // Vulkan debug message handle
 	std::shared_ptr<EngineComponents> _components;
 
-	FrameData& get_current_frame() {return _components->frames[_frameNumber % FRAME_OVERLAP];};
-
 	VkQueue _graphicsQueue;
 	uint32_t _graphicsQueueFamily;
-
-
 	DeletionQueue _mainDeletionQueue;
-
 	//draw resources
 	AllocatedImage _drawImage;
 	AllocatedImage _depthImage;
-	VkExtent2D _drawExtent; // ###
+	VkExtent2D _drawExtent;
 	float renderScale = 1.f;
 
 	//Mesh
-
-	GPUMeshBuffers rectangle;
-
-	std::vector<std::shared_ptr<MeshAsset>> testMeshes;
-
-	bool resize_requested;
-
-	GPUSceneData sceneData; // ### DrawController
-
-	TextureController _textureController;
-	SwapchainController _swapchainController;
-
-	
+	std::vector<std::shared_ptr<MeshAsset>> testMeshes; // To be removed later
 
 	Scene* scene = new Scene();
 	Camera mainCamera;
-
 	std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
 
 	EngineStats stats;
-	
+
 
 
 	//initializes everything in the engine
 	void init();
-
 	//shuts down the engine
 	void cleanup();
-
-
 	//run main loop
 	void run();
 
+	FrameData& get_current_frame() { return _components->frames[_frameNumber % FRAME_OVERLAP]; };
 	GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
-	//Added functions below
-
-	
+	static VulkanEngine& Get();
 
 	// Temporary public TODO::
 	BufferAllocator _bufferAllocator;
 	MaterialController _materialController;
+	TextureController _textureController;
+	SwapchainController _swapchainController;
 
 private:
 	UIController _uiController;
-
 	PipelineController _pipelineController;
 	DescriptorController _descriptorController;
 	DrawController _drawController;
-	
-	
 	CommandController _commandController;
 
 	void init_vulkan();
