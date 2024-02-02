@@ -26,7 +26,7 @@ struct GLTFMetallic_Roughness {
 
 	DescriptorWriter writer;
 
-	void build_pipelines(class VulkanEngine* engine);
+	void build_pipelines(std::shared_ptr<struct EngineComponents> engine, class DescriptorController* descriptorController);
 	void clear_resources(VkDevice device);
 
 	MaterialInstance write_material(VkDevice device, MaterialPass pass, const MaterialResources& resources, DescriptorAllocatorGrowable& descriptorAllocator);
