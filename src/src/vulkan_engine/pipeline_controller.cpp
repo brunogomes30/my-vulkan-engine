@@ -87,13 +87,13 @@ void PipelineController::init_background_pipelines(std::vector<ComputeEffect>& b
     });
 }
 
-void PipelineController::init_mesh_pipeline(){
+void PipelineController::init_mesh_pipeline() {
     VkShaderModule meshFragShader;
-    if (!vkutil::load_shader_module(SHADERS_PATH(tex_image.frag.spv), _engineComponents->device, &meshFragShader)) {
+    if (!vkutil::load_shader_module(SHADERS_PATH(mesh.frag.spv), _engineComponents->device, &meshFragShader)) {
         fmt::print("Error when building the triangle mesh fragment shader module");
     }
     VkShaderModule meshVertexShader;
-    if (!vkutil::load_shader_module(SHADERS_PATH(colored_triangle_mesh.vert.spv), _engineComponents->device, &meshVertexShader)) {
+    if (!vkutil::load_shader_module(SHADERS_PATH(mesh.vert.spv), _engineComponents->device, &meshVertexShader)) {
         fmt::print("Error when building the triangle mesh vertex shader module");
     }
 
@@ -105,7 +105,7 @@ void PipelineController::init_mesh_pipeline(){
     VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::pipeline_layout_create_info();
     pipeline_layout_info.pPushConstantRanges = &bufferRange;
     pipeline_layout_info.pushConstantRangeCount = 1;
-    pipeline_layout_info.pSetLayouts = &_descriptorController->singleImageDescriptorLayout;
+    pipeline_layout_info.pSetLayouts = &_descriptorController->gpuSceneDataDescriptorLayout;
     pipeline_layout_info.setLayoutCount = 1;
 
 
@@ -145,5 +145,66 @@ void PipelineController::init_mesh_pipeline(){
     _engineComponents->mainDeletionQueue->push_function([&]() {
         vkDestroyPipelineLayout(_engineComponents->device, meshPipelineLayout, nullptr);
         vkDestroyPipeline(_engineComponents->device, meshPipeline, nullptr);
+    });
+}
+
+void PipelineController::init_gizmo_pipeline() {
+    VkShaderModule meshFragShader;
+    if (!vkutil::load_shader_module(SHADERS_PATH(gizmo.frag.spv), _engineComponents->device, &meshFragShader)) {
+        fmt::print("Error when building the gizmo fragment shader module");
+    }
+    VkShaderModule meshVertexShader;
+    if (!vkutil::load_shader_module(SHADERS_PATH(gizmo.vert.spv), _engineComponents->device, &meshVertexShader)) {
+        fmt::print("Error when building the gizmo vertex shader module");
+    }
+
+    VkPushConstantRange bufferRange{};
+    bufferRange.offset = 0;
+    bufferRange.size = sizeof(GPUDrawPushConstants);
+    bufferRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::pipeline_layout_create_info();
+    pipeline_layout_info.pPushConstantRanges = &bufferRange;
+    pipeline_layout_info.pushConstantRangeCount = 1;
+    pipeline_layout_info.pSetLayouts = &_descriptorController->gizmoDescriptorLayout;
+    pipeline_layout_info.setLayoutCount = 1;
+
+
+    VK_CHECK(vkCreatePipelineLayout(_engineComponents->device, &pipeline_layout_info, nullptr, &gizmoPipelineLayout));
+
+    PipelineBuilder pipelineBuilder;
+
+    //use the mesh layout we created
+    pipelineBuilder._pipelineLayout = gizmoPipelineLayout;
+    //connecting the vertex and pixel shaders to the pipeline
+    pipelineBuilder.set_shaders(meshVertexShader, meshFragShader);
+    //it will draw triangles
+    pipelineBuilder.set_input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    //filled triangles
+    pipelineBuilder.set_polygon_model(VK_POLYGON_MODE_FILL);
+    //no backface culling
+    pipelineBuilder.set_cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+    //no multisampling
+    pipelineBuilder.set_multisampling_none();
+    //no blending
+    pipelineBuilder.disable_blending();
+
+    //pipelineBuilder.disable_depthtest();
+    pipelineBuilder.enable_depthtest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
+
+    //connect the image format we will draw into, from draw image
+    pipelineBuilder.set_color_attachment_format(_engineComponents->drawImage->imageFormat);
+    pipelineBuilder.set_depth_format(_engineComponents->depthImage->imageFormat);
+
+    //finally build the pipeline
+    gizmoPipeline = pipelineBuilder.build_pipeline(_engineComponents->device);
+
+    //clean structures
+    vkDestroyShaderModule(_engineComponents->device, meshFragShader, nullptr);
+    vkDestroyShaderModule(_engineComponents->device, meshVertexShader, nullptr);
+
+    _engineComponents->mainDeletionQueue->push_function([&]() {
+        vkDestroyPipelineLayout(_engineComponents->device, gizmoPipelineLayout, nullptr);
+        vkDestroyPipeline(_engineComponents->device, gizmoPipeline, nullptr);
     });
 }

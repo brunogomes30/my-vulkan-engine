@@ -2,10 +2,20 @@
 #include<node/node.h>
 #include<vk_types.h>
 #include <glm/gtx/transform.hpp>
+#include <scene/light/light.h>
+#include <gizmos/gizmos_controller.h>	
+#include <vk_types.h>
 #include <chrono>
 
-void Scene::init(Camera* camera) {
+void Scene::init(Camera* camera, GizmosController* gizmosController) {
 	this->camera = camera;
+
+	//Temporary light until we can read from gltf
+	lights.push_back(Light::CreatePointLight(glm::vec3(0, 0, 10), glm::vec4(0.7f), 0.5f));
+	lights.push_back(Light::CreateDirectionalLight(glm::vec3(0, 1, 0.5), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f))); // RGBA ABGR
+	_gizmosController = gizmosController;
+	
+
 }
 
 
@@ -26,7 +36,10 @@ void Scene::update_scene(GPUSceneData& sceneData) {
 	sceneData.ambientColor = glm::vec4(.1f);
 	sceneData.sunlightColor = glm::vec4(1.f);
 	sceneData.sunlightDirection = glm::vec4(0, 1, 0.5, 1.f);
-	
+	sceneData.lights[0] = this->lights[0].lightData;
+	//sceneData.lights[1] = this->lights[1].lightData;
+	sceneData.lightCount = lights.size();
+
 	loadedGLTF->Draw(glm::mat4{ 1.f }, mainDrawContext);
 	//end clock
 	auto end = std::chrono::system_clock::now();
@@ -58,6 +71,14 @@ void Scene::draw_scene(VkCommandBuffer& cmd, VkDescriptorSet& globalDescriptor, 
 		vkCmdDrawIndexed(cmd, draw.indexCount, 1, draw.firstIndex, 0, 0);
         sceneStats.drawcall_count++;
         sceneStats.triangle_count += draw.indexCount / 3;
+	}
+}
+
+void Scene::draw_gizmos(VkCommandBuffer& cmd, VkDescriptorSet& globalDescriptor, const GPUSceneData& sceneData) {
+	//Draw lights as gizmos
+	for (auto& l : lights) {
+		// create square
+		_gizmosController->draw_gizmo(cmd, GizmoShape::RECTANGLE, l.lightData.position);		
 	}
 }
 

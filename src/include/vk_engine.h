@@ -25,7 +25,9 @@
 #include<vulkan_engine/draw_controller.h>
 #include<vulkan_engine/command_controller.h>
 #include<materials/material_controller.h>
+#include<gizmos/gizmos_controller.h>
 #include "vk_mem_alloc.h"
+
 
 class VulkanEngine {
 public:
@@ -80,6 +82,7 @@ private:
 	DescriptorController _descriptorController;
 	DrawController _drawController;
 	CommandController _commandController;
+	GizmosController _gizmosController;
 
 	void init_vulkan();
 	void init_commands();

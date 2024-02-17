@@ -35,6 +35,8 @@ void DrawController::draw(Scene* scene, FrameData& frameData)
 	Camera* camera = scene->getCamera();
 	camera->update();
 	sceneData.view = camera->getViewMatrix();
+	sceneData.inverseView = glm::inverse(sceneData.view);
+	sceneData.cameraPosition = glm::vec4(camera->position, 1.f);
 	scene->update_scene(sceneData);
 	_stats->scene_update_time = scene->sceneStats.scene_update_time;
 
@@ -73,6 +75,7 @@ void DrawController::draw(Scene* scene, FrameData& frameData)
 	// transition our main draw image into general layout so we can write into it
 	// we will overwrite it all so we dont care about what was the older layout
 	vkutil::transition_image(cmd, _engineComponents->drawImage->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
 
 	draw_background(cmd, frameData);
 
@@ -211,9 +214,12 @@ void DrawController::draw_geometry(VkCommandBuffer cmd, Scene* scene, FrameData&
 	VkRenderingInfo renderInfo = vkinit::rendering_info(*_engineComponents->drawExtent, &colorAttachment, &depthAttachment);
 	vkCmdBeginRendering(cmd, &renderInfo);
 
+	
+
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineController->meshPipeline);
 
 	//bind a texture
+	/*
 	VkDescriptorSet imageSet = frameData._frameDescriptors.allocate(_engineComponents->device, _descriptorController->singleImageDescriptorLayout);
 	{
 		DescriptorWriter writer;
@@ -222,7 +228,7 @@ void DrawController::draw_geometry(VkCommandBuffer cmd, Scene* scene, FrameData&
 		writer.update_set(_engineComponents->device, imageSet);
 	}
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineController->meshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
-
+	*/
 	GPUDrawPushConstants push_constants;
 	push_constants.worldMatrix = glm::mat4{ 1.f };
 
@@ -250,5 +256,12 @@ void DrawController::draw_geometry(VkCommandBuffer cmd, Scene* scene, FrameData&
 	_stats->add_mesh_draw_time(elapsed.count() / 1000.f);
 	_stats->add_triangle_count(scene->sceneStats.triangle_count);
 	_stats->add_drawcall_count(scene->sceneStats.drawcall_count);
+
+
+	// Draw gizmos
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineController->gizmoPipeline);
+	vkCmdPushConstants(cmd, _pipelineController->gizmoPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineController->gizmoPipelineLayout, 0, 1, &globalDescriptor, 0, nullptr);
+	scene->draw_gizmos(cmd, globalDescriptor, sceneData);
 	vkCmdEndRendering(cmd);
 }

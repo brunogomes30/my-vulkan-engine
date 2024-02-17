@@ -26,9 +26,13 @@ public:
 	VkPipelineLayout meshPipelineLayout;
 	VkPipeline meshPipeline;
 
+	VkPipelineLayout gizmoPipelineLayout;
+	VkPipeline gizmoPipeline;
+
 	void init(std::shared_ptr<EngineComponents> engineComponents, DescriptorController* descriptorController);
 	void init_background_pipelines(std::vector<ComputeEffect>& backgroundEffects);
 	void init_mesh_pipeline();
+	void init_gizmo_pipeline();
 private:
 	DescriptorController* _descriptorController;
 

@@ -54,4 +54,10 @@ void DescriptorController::init_descriptors()
         builder.add_binding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         singleImageDescriptorLayout = builder.build(_engineComponents->device, VK_SHADER_STAGE_FRAGMENT_BIT);
     }
+
+    {
+		DescriptorLayoutBuilder builder;
+		builder.add_binding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+		gizmoDescriptorLayout = builder.build(_engineComponents->device, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
 }

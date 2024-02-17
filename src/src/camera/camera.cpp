@@ -70,7 +70,7 @@ glm::mat4 Camera::getRotationMatrix()
 
 void Camera::init() {
     velocity = glm::vec3(0.f);
-    position = glm::vec3(30.f, -00.f, -085.f);
+    position = glm::vec3(2.f, 2.f, 10.f);
 
     pitch = 0;
     yaw = 0;

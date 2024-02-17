@@ -5,8 +5,8 @@
 void GLTFMetallic_Roughness::build_pipelines(std::shared_ptr<EngineComponents> engineComponents, DescriptorController* descriptorController)
 {
 	VkShaderModule meshFragShader;
-	if (!vkutil::load_shader_module("../../shaders/mesh.frag.spv", engineComponents->device, &meshFragShader)) {
-		fmt::println("Error when building the triangle fragment shader module");
+	if (!vkutil::load_shader_module("../../shaders/mesh_material.frag.spv", engineComponents->device, &meshFragShader)) {
+		fmt::println("Error when building the triangle material fragment shader module");
 	}
 
 	VkShaderModule meshVertexShader;

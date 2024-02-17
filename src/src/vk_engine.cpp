@@ -57,15 +57,14 @@ void VulkanEngine::init()
 	init_default_data();
 	mainCamera.init();
 
-	std::string structurePath = { "..\\..\\assets\\littlest_neo_tokyo.glb" };
+	std::string structurePath = { "..\\..\\assets\\room\\room.glb" };
 	auto structureFile = loader_gltf::loadGltf(this, structurePath, &_materialController);
 
 	assert(structureFile.has_value());
 
-	loadedScenes["littlest_neo_tokyo"] = *structureFile;
-	scene->set_loadedGLTF(loadedScenes["littlest_neo_tokyo"]);
-	scene->init(&mainCamera);
-
+	loadedScenes["room"] = *structureFile;
+	scene->set_loadedGLTF(loadedScenes["room"]);
+	scene->init(&mainCamera, &_gizmosController);
 	// everything went fine
 	_isInitialized = true;
 }
@@ -76,6 +75,7 @@ void VulkanEngine::init_vulkan() {
 	auto inst_ret = builder.set_app_name("BCGomes Vulkan Engine")
 		.request_validation_layers(bUseValidationLayers)
 		.use_default_debug_messenger()
+		.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT)
 		.require_api_version(1, 3, 0)
 		.build();
 
@@ -142,7 +142,7 @@ void VulkanEngine::init_pipelines() {
 	_pipelineController.init(_components, &_descriptorController);
 	_pipelineController.init_background_pipelines(_drawController.backgroundEffects);
 	_pipelineController.init_mesh_pipeline();
-
+	_pipelineController.init_gizmo_pipeline();
 	_materialController.init_material_pipelines();
 }
 
@@ -151,6 +151,8 @@ void VulkanEngine::init_pipelines() {
 void VulkanEngine::init_default_data() {
 	testMeshes = loadGltfMeshes(this, "..\\..\\assets\\basicmesh.glb").value();
 	_materialController.init_default_data();
+
+	_gizmosController.init(this, _pipelineController.gizmoPipeline, _pipelineController.gizmoPipelineLayout);
 	//loadedScenes["structure"]->Draw(glm::mat4{ 1.f }, mainDrawContext);
 
 }

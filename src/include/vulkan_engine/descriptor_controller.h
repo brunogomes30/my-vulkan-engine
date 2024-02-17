@@ -5,11 +5,12 @@ class DescriptorController {
 public:
 	DescriptorAllocatorGrowable globalDescriptorAllocator;
 
-	VkDescriptorSet drawImageDescriptors; // ### descriptor controller
-	VkDescriptorSetLayout drawImageDescriptorLayout; // ### cescriptor controller
+	VkDescriptorSet drawImageDescriptors; 
+	VkDescriptorSetLayout drawImageDescriptorLayout; 
 
-	VkDescriptorSetLayout gpuSceneDataDescriptorLayout; //### descriptor controller
-	VkDescriptorSetLayout singleImageDescriptorLayout; //### descriptor controller
+	VkDescriptorSetLayout gpuSceneDataDescriptorLayout; 
+	VkDescriptorSetLayout gizmoDescriptorLayout; 
+	VkDescriptorSetLayout singleImageDescriptorLayout; 
 
 
 	void init(std::shared_ptr<EngineComponents> engineComponents);
