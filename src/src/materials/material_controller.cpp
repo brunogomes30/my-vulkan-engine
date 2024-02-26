@@ -53,6 +53,7 @@ void MaterialController::init_default_data() {
 	materialResources.colorSampler = defaultSamplerLinear;
 	materialResources.metalRoughImage = whiteImage;
 	materialResources.metalRoughSampler = defaultSamplerLinear;
+	materialResources.hasNormalMap = false;
 
 	//set the uniform buffer for the material data
 	AllocatedBuffer materialConstants = _bufferAllocator->create_buffer(sizeof(GLTFMetallic_Roughness::MaterialConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);

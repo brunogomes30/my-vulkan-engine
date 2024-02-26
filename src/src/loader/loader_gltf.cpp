@@ -154,7 +154,8 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
     }
 
     // create buffer to hold the material data
-    file.materialDataBuffer = engine->_bufferAllocator.create_buffer(sizeof(GLTFMetallic_Roughness::MaterialConstants) * gltf.materials.size(),
+    size_t size = sizeof(GLTFMetallic_Roughness::MaterialConstants) * gltf.materials.size();
+    file.materialDataBuffer = engine->_bufferAllocator.create_buffer(size,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
     int data_index = 0;
     GLTFMetallic_Roughness::MaterialConstants* sceneMaterialConstants = (GLTFMetallic_Roughness::MaterialConstants*)file.materialDataBuffer.info.pMappedData;
@@ -199,11 +200,28 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
             materialResources.colorImage = images[img];
             materialResources.colorSampler = file.samplers[sampler];
         }
+
+        // Grab normal map
+        if (mat.normalTexture.has_value()) {
+			size_t img = gltf.textures[mat.normalTexture.value().textureIndex].imageIndex.value();
+			size_t sampler = gltf.textures[mat.normalTexture.value().textureIndex].samplerIndex.value();
+			materialResources.normalImage = images[img];
+			materialResources.normalSampler = file.samplers[sampler];
+            materialResources.hasNormalMap = true;
+            
+            std::cout << "Normal map found" << std::endl;
+        }
+        else {
+            materialResources.hasNormalMap = false;
+        }
+        
+
+
         // build material
         newMat->data = materialController->metalRoughMaterial.write_material(engine->_components->device, passType, materialResources, file.descriptorPool);
 
         data_index++;
-
+    }
         // use the same vectors for all meshes so that the memory doesnt reallocate as
         // often
         std::vector<uint32_t> indices;
@@ -297,9 +315,11 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
                 newmesh->surfaces.push_back(newSurface);
             }
 
+
+            newmesh->vertices = vertices;
             newmesh->meshBuffers = engine->uploadMesh(indices, vertices);
         }
-    }
+    
 
     // load all nodes and their meshes
     for (fastgltf::Node& node : gltf.nodes) {
@@ -315,7 +335,6 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
         }
 
         nodes.push_back(newNode);
-        file.nodes[node.name.c_str()];
 
         std::visit(fastgltf::visitor{ [&](fastgltf::Node::TransformMatrix matrix) {
                                           memcpy(&newNode->localTransform, matrix.data(), sizeof(matrix));
@@ -334,12 +353,12 @@ std::optional<std::shared_ptr<LoadedGLTF>> loader_gltf::loadGltf(VulkanEngine* e
                 newNode->localTransform = tm * rm * sm;
             } },
             node.transform);
+        file.nodes[node.name.c_str()] = newNode;
     }
     // run loop again to setup transform hierarchy
     for (int i = 0; i < gltf.nodes.size(); i++) {
         fastgltf::Node& node = gltf.nodes[i];
         std::shared_ptr<Node>& sceneNode = nodes[i];
-
         for (auto& c : node.children) {
             sceneNode->children.push_back(nodes[c]);
             nodes[c]->parent = sceneNode;

@@ -5,17 +5,30 @@
 #include <scene/light/light.h>
 #include <gizmos/gizmos_controller.h>	
 #include <vk_types.h>
+#include <node/mesh_node.h>
+#include <node/node.h>
 #include <chrono>
 
 void Scene::init(Camera* camera, GizmosController* gizmosController) {
 	this->camera = camera;
 
 	//Temporary light until we can read from gltf
-	lights.push_back(Light::CreatePointLight(glm::vec3(0, 0, 10), glm::vec4(0.7f), 0.5f));
-	lights.push_back(Light::CreateDirectionalLight(glm::vec3(0, 1, 0.5), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f))); // RGBA ABGR
+	lights.push_back(Light::CreatePointLight(glm::vec3(0, 10, 0), glm::vec4(0.7f), 0.5f));
+	//lights.push_back(Light::CreateDirectionalLight(glm::vec3(0, 1, 0.5), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f))); // RGBA ABGR
 	_gizmosController = gizmosController;
-	
+	std::vector<std::shared_ptr<MeshNode>> meshNodes;
+	//loop loadedGLTF->meshes and add to meshes
 
+	for (auto it = loadedGLTF->nodes.begin(); it != loadedGLTF->nodes.end(); it++) {
+		std::shared_ptr<MeshNode> meshNode = std::dynamic_pointer_cast<MeshNode>(it->second);
+		if (meshNode != nullptr) {
+
+			glm::mat4 worldMatrix = meshNode->worldTransform;
+			meshNodes.push_back(meshNode);
+		}
+
+	}
+	_gizmosController->set_meshes(meshNodes);
 }
 
 
@@ -80,6 +93,11 @@ void Scene::draw_gizmos(VkCommandBuffer& cmd, VkDescriptorSet& globalDescriptor,
 		// create square
 		_gizmosController->draw_gizmo(cmd, GizmoShape::RECTANGLE, l.lightData.position);		
 	}
+
+	if (_gizmosController->willDrawNormals) {
+				_gizmosController->draw_normals(cmd, 1.0f);
+	}
+
 }
 
 void Scene::sort_drawables(const GPUSceneData& sceneData) {

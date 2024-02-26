@@ -230,6 +230,8 @@ GPUMeshBuffers VulkanEngine::uploadMesh(std::span<uint32_t> indices, std::span<V
 		vkCmdCopyBuffer(cmd, staging.buffer, newSurface.indexBuffer.buffer, 1, &indexCopy);
 	});
 
+	
+
 	_bufferAllocator.destroy_buffer(staging);
 	return newSurface;
 }
@@ -322,6 +324,11 @@ void VulkanEngine::run()
 		ImGui_ImplSDL2_NewFrame(_components->_window);
 		ImGui::NewFrame();
 		//some imgui UI to test
+
+		if (ImGui::Begin("Debugging")) {
+			ImGui::Checkbox("Draw Normals", &_gizmosController.willDrawNormals);
+			ImGui::End();
+		}
 		if (ImGui::Begin("background")) {
 			ImGui::SliderFloat("Render Scale", &renderScale, 0.3f, 1.f);
 			ComputeEffect& selected = _drawController.backgroundEffects[_drawController.currentBackgroundEffect];

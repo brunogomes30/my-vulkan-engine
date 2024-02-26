@@ -232,7 +232,7 @@ void DrawController::draw_geometry(VkCommandBuffer cmd, Scene* scene, FrameData&
 	GPUDrawPushConstants push_constants;
 	push_constants.worldMatrix = glm::mat4{ 1.f };
 
-	glm::mat4 view = glm::translate(glm::vec3{ 0,0,-5 });
+	glm::mat4 view = glm::translate(glm::vec3{ 0,0, 0 });
 	// camera projection
 	glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)_engineComponents->drawExtent->width / (float)_engineComponents->drawExtent->height, 10000.f, 0.1f);
 

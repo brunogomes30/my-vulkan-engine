@@ -8,6 +8,7 @@
 class VulkanEngine;
 struct LoadedGLTF : public IRenderable {
 
+public:
     // storage for all the data on a given glTF file
     std::unordered_map<std::string, std::shared_ptr<MeshAsset>> meshes;
     std::unordered_map<std::string, std::shared_ptr<Node>> nodes;
