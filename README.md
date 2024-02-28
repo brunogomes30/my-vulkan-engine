@@ -1,8 +1,4 @@
 # my-vulkan-engine
 
 
-TODO list:
-
-- Add lights [x]
-- Refactor from the guide
-- 
+Humble graphics engine made with vulkan in my free time. Planning on making a game engine in the future.
